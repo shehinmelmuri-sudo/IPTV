@@ -1,0 +1,585 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>IPTV Live Player</title>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #101114;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+header {
+    background: #191a20;
+    padding: 18px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #30313a;
+}
+
+.logo {
+    font-size: 23px;
+    font-weight: bold;
+    color: #ff4545;
+}
+
+.container {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    min-height: calc(100vh - 65px);
+}
+
+.sidebar {
+    background: #191a20;
+    padding: 15px;
+    border-right: 1px solid #30313a;
+    overflow-y: auto;
+    max-height: calc(100vh - 65px);
+}
+
+input, select {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 12px;
+    background: #292a32;
+    color: white;
+    border: 1px solid #41424c;
+    border-radius: 7px;
+    outline: none;
+}
+
+.channel {
+    padding: 12px;
+    margin-bottom: 7px;
+    background: #24252c;
+    border-radius: 7px;
+    cursor: pointer;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.channel:hover,
+.channel.active {
+    background: #453030;
+    border-left: 3px solid #ff4545;
+}
+
+.channel-name {
+    font-size: 14px;
+    overflow-wrap: anywhere;
+}
+
+.player-area {
+    padding: 25px;
+}
+
+video {
+    width: 100%;
+    max-height: 70vh;
+    background: black;
+    border-radius: 10px;
+}
+
+.now-playing {
+    margin-top: 18px;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.status {
+    color: #aaa;
+    margin-top: 10px;
+}
+
+.count {
+    color: #aaa;
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
+.keyboard-info {
+    margin-top: 25px;
+    background: #191a20;
+    border: 1px solid #30313a;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.keyboard-info h3 {
+    color: #ff4545;
+    margin-top: 0;
+}
+
+.keyboard-info p {
+    color: #bbb;
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+.volume-info {
+    color: #ff6565;
+    margin-top: 12px;
+}
+
+@media(max-width:750px) {
+    .container {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+        max-height: 350px;
+        border-right: none;
+    }
+
+    .player-area {
+        padding: 15px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+    <div class="logo">▶ IPTV LIVE</div>
+    <div id="playlistStatus">Loading playlist...</div>
+</header>
+
+<div class="container">
+
+    <aside class="sidebar">
+
+        <input
+            type="text"
+            id="search"
+            placeholder="Search channels..."
+        >
+
+        <select id="category">
+            <option value="all">All Categories</option>
+        </select>
+
+        <div class="count" id="count">Loading channels...</div>
+
+        <div id="channelList"></div>
+
+    </aside>
+
+    <main class="player-area">
+
+        <video id="video" controls playsinline></video>
+
+        <div class="now-playing" id="channelTitle">
+            Select a channel
+        </div>
+
+        <div class="status" id="playerStatus">
+            Choose a channel from the list to start streaming.
+        </div>
+
+        <div class="volume-info" id="volumeInfo">
+            Volume: 100%
+        </div>
+
+        <div class="keyboard-info">
+
+            <h3>⌨ Keyboard Shortcuts</h3>
+
+            <p>
+                ↑ Up Arrow : Volume Increase<br>
+                ↓ Down Arrow : Volume Decrease<br>
+                ← Left Arrow : Previous Channel<br>
+                → Right Arrow : Next Channel<br>
+                M : Mute / Unmute<br>
+                Space : Play / Pause<br>
+                F : Full Screen
+            </p>
+
+        </div>
+
+    </main>
+
+</div>
+
+<script>
+
+const PLAYLIST_URL =
+"https://iptv-org.github.io/iptv/index.m3u";
+
+const video = document.getElementById("video");
+const channelList = document.getElementById("channelList");
+const search = document.getElementById("search");
+const category = document.getElementById("category");
+
+let channels = [];
+let hls = null;
+let activeChannel = null;
+
+// Load playlist
+async function loadPlaylist() {
+
+    try {
+
+        document.getElementById("playlistStatus").textContent =
+        "Loading...";
+
+        const response = await fetch(PLAYLIST_URL);
+
+        if (!response.ok) {
+            throw new Error("Playlist could not be loaded");
+        }
+
+        const text = await response.text();
+
+        channels = parseM3U(text);
+
+        if (!channels.length) {
+            throw new Error("No channels found");
+        }
+
+        loadCategories();
+        renderChannels();
+
+        document.getElementById("playlistStatus").textContent =
+        channels.length + " Channels Loaded";
+
+    } catch (error) {
+
+        document.getElementById("playlistStatus").textContent =
+        "Loading failed";
+
+        channelList.textContent =
+        error.message +
+        ". Check internet connection or CORS access.";
+
+    }
+}
+
+// Parse M3U
+function parseM3U(data) {
+
+    const lines = data.split(/\r?\n/);
+    const result = [];
+
+    let current = null;
+
+    for (const line of lines) {
+
+        const value = line.trim();
+
+        if (value.startsWith("#EXTINF:")) {
+
+            const name = value.split(",").slice(1).join(",").trim();
+
+            const group =
+            value.match(/group-title="([^"]*)"/i);
+
+            const logo =
+            value.match(/tvg-logo="([^"]*)"/i);
+
+            current = {
+                name: name || "Unknown Channel",
+                category: group ? group[1] : "Other",
+                logo: logo ? logo[1] : "",
+                url: ""
+            };
+
+        } else if (
+            current &&
+            value &&
+            !value.startsWith("#")
+        ) {
+
+            current.url = value;
+            result.push(current);
+            current = null;
+
+        }
+    }
+
+    return result;
+}
+
+// Categories
+function loadCategories() {
+
+    const categories = [
+        ...new Set(channels.map(c => c.category))
+    ].sort();
+
+    categories.forEach(item => {
+
+        const option = document.createElement("option");
+
+        option.value = item;
+        option.textContent = item;
+
+        category.appendChild(option);
+
+    });
+}
+
+// Render channels
+function renderChannels() {
+
+    channelList.innerHTML = "";
+
+    const keyword = search.value.toLowerCase();
+    const selectedCategory = category.value;
+
+    const filtered = channels.filter(c => {
+
+        const matchesName =
+        c.name.toLowerCase().includes(keyword);
+
+        const matchesCategory =
+        selectedCategory === "all" ||
+        c.category === selectedCategory;
+
+        return matchesName && matchesCategory;
+
+    });
+
+    document.getElementById("count").textContent =
+    `Showing ${filtered.length} / ${channels.length} channels`;
+
+    filtered.forEach(channel => {
+
+        const item = document.createElement("div");
+
+        item.className = "channel";
+
+        if (activeChannel === channel) {
+            item.classList.add("active");
+        }
+
+        const name = document.createElement("span");
+        name.className = "channel-name";
+        name.textContent = channel.name;
+
+        item.appendChild(name);
+
+        item.onclick = () => playChannel(channel);
+
+        channelList.appendChild(item);
+
+    });
+}
+
+// Play channel
+function playChannel(channel) {
+
+    activeChannel = channel;
+
+    document.getElementById("channelTitle").textContent =
+    channel.name;
+
+    document.getElementById("playerStatus").textContent =
+    "Connecting to stream...";
+
+    renderChannels();
+
+    if (hls) {
+        hls.destroy();
+        hls = null;
+    }
+
+    video.pause();
+    video.removeAttribute("src");
+    video.load();
+
+    if (Hls.isSupported()) {
+
+        hls = new Hls();
+
+        hls.loadSource(channel.url);
+        hls.attachMedia(video);
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+
+            video.play().catch(() => {
+                document.getElementById("playerStatus").textContent =
+                "Press Play to start streaming.";
+            });
+
+            document.getElementById("playerStatus").textContent =
+            "Stream connected";
+
+        });
+
+        hls.on(Hls.Events.ERROR, (event, data) => {
+
+            if (data.fatal) {
+
+                document.getElementById("playerStatus").textContent =
+                "Stream unavailable or playback error.";
+
+            }
+
+        });
+
+    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+
+        video.src = channel.url;
+
+        video.play().catch(() => {
+            document.getElementById("playerStatus").textContent =
+            "Press Play to start streaming.";
+        });
+
+    } else {
+
+        document.getElementById("playerStatus").textContent =
+        "HLS not supported.";
+
+    }
+}
+
+// Next channel
+function nextChannel() {
+
+    if (!activeChannel || !channels.length) return;
+
+    let index = channels.indexOf(activeChannel);
+
+    index = (index + 1) % channels.length;
+
+    playChannel(channels[index]);
+}
+
+// Previous channel
+function previousChannel() {
+
+    if (!activeChannel || !channels.length) return;
+
+    let index = channels.indexOf(activeChannel);
+
+    index = (index - 1 + channels.length) % channels.length;
+
+    playChannel(channels[index]);
+}
+
+// Update volume display
+function updateVolume() {
+
+    const volume = Math.round(video.volume * 100);
+
+    document.getElementById("volumeInfo").textContent =
+    video.muted ? "Volume: Muted" : "Volume: " + volume + "%";
+
+}
+
+video.addEventListener("volumechange", updateVolume);
+
+// KEYBOARD CONTROLS
+document.addEventListener("keydown", function(event) {
+
+    // Don't interfere with search or dropdown
+    if (
+        event.target.tagName === "INPUT" ||
+        event.target.tagName === "SELECT" ||
+        event.target.tagName === "TEXTAREA"
+    ) {
+        return;
+    }
+
+    switch(event.key) {
+
+        case "ArrowUp":
+
+            event.preventDefault();
+
+            video.muted = false;
+            video.volume = Math.min(1, video.volume + 0.1);
+
+            break;
+
+        case "ArrowDown":
+
+            event.preventDefault();
+
+            video.volume = Math.max(0, video.volume - 0.1);
+
+            break;
+
+        case "ArrowRight":
+
+            event.preventDefault();
+
+            nextChannel();
+
+            break;
+
+        case "ArrowLeft":
+
+            event.preventDefault();
+
+            previousChannel();
+
+            break;
+
+        case "m":
+        case "M":
+
+            video.muted = !video.muted;
+
+            break;
+
+        case " ":
+
+            event.preventDefault();
+
+            if (video.paused) {
+                video.play().catch(() => {});
+            } else {
+                video.pause();
+            }
+
+            break;
+
+        case "f":
+        case "F":
+
+            if (!document.fullscreenElement) {
+                video.requestFullscreen?.();
+            } else {
+                document.exitFullscreen?.();
+            }
+
+            break;
+
+    }
+
+});
+
+// Search
+search.addEventListener("input", renderChannels);
+
+// Category filter
+category.addEventListener("change", renderChannels);
+
+// Initial volume
+video.volume = 1;
+updateVolume();
+
+// Start
+loadPlaylist();
+
+</script>
+
+</body>
+</html>
