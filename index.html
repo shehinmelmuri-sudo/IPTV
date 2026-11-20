@@ -4,355 +4,149 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>IPTV Smart Player</title>
 
-<script src="https://cdn.jsdelivr.net/npm/hls.js@1"></script>
+<title>IPTV Live Player</title>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 
 <style>
-:root {
-    --bg: #0c0e13;
-    --panel: #171a22;
-    --card: #20242e;
-    --accent: #ff454f;
-    --text: #f5f5f5;
-    --muted: #9ba1ad;
-    --border: #303541;
+* {
+    box-sizing: border-box;
 }
-
-* { box-sizing: border-box; }
 
 body {
     margin: 0;
-    background: var(--bg);
-    color: var(--text);
+    background: #101114;
+    color: white;
     font-family: Arial, sans-serif;
 }
 
 header {
-    height: 68px;
-    padding: 0 25px;
-    background: var(--panel);
-    border-bottom: 1px solid var(--border);
+    background: #191a20;
+    padding: 18px 25px;
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 10;
+    align-items: center;
+    border-bottom: 1px solid #30313a;
 }
 
 .logo {
     font-size: 23px;
     font-weight: bold;
-    color: var(--accent);
+    color: #ff4545;
 }
 
-.live {
-    font-size: 12px;
-    color: #ff6464;
-    font-weight: bold;
-}
-
-.layout {
+.container {
     display: grid;
-    grid-template-columns: 340px minmax(0,1fr);
-    min-height: calc(100vh - 68px);
+    grid-template-columns: 320px 1fr;
+    min-height: calc(100vh - 65px);
 }
 
 .sidebar {
-    background: var(--panel);
-    padding: 16px;
-    border-right: 1px solid var(--border);
-    height: calc(100vh - 68px);
-    position: sticky;
-    top: 68px;
-    display: flex;
-    flex-direction: column;
+    background: #191a20;
+    padding: 15px;
+    border-right: 1px solid #30313a;
+    overflow-y: auto;
+    max-height: calc(100vh - 65px);
 }
 
 input, select {
     width: 100%;
     padding: 12px;
     margin-bottom: 12px;
-    background: var(--card);
+    background: #292a32;
     color: white;
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    border: 1px solid #41424c;
+    border-radius: 7px;
     outline: none;
 }
 
-.tabs {
-    display: flex;
-    gap: 7px;
-    margin-bottom: 12px;
-}
-
-.tabs button {
-    flex: 1;
-    padding: 10px 5px;
-    background: var(--card);
-    color: white;
-    border: 1px solid var(--border);
+.channel {
+    padding: 12px;
+    margin-bottom: 7px;
+    background: #24252c;
     border-radius: 7px;
     cursor: pointer;
-}
-
-.tabs button.active {
-    background: var(--accent);
-    border-color: var(--accent);
-}
-
-.channel-count {
-    color: var(--muted);
-    font-size: 12px;
-    margin-bottom: 10px;
-}
-
-.channel-list {
-    overflow-y: auto;
-    flex: 1;
-}
-
-.channel {
-    padding: 11px;
-    margin-bottom: 7px;
-    background: var(--card);
-    border-radius: 8px;
     display: flex;
-    align-items: center;
     gap: 10px;
-    cursor: pointer;
-    border: 1px solid transparent;
+    align-items: center;
 }
 
-.channel:hover {
-    border-color: var(--accent);
-}
-
+.channel:hover,
 .channel.active {
-    background: #39232a;
-    border-color: var(--accent);
-}
-
-.channel img {
-    width: 38px;
-    height: 38px;
-    object-fit: contain;
-    background: #111;
-    border-radius: 6px;
-}
-
-.channel-info {
-    min-width: 0;
-    flex: 1;
+    background: #453030;
+    border-left: 3px solid #ff4545;
 }
 
 .channel-name {
-    font-size: 13px;
-    font-weight: bold;
+    font-size: 14px;
     overflow-wrap: anywhere;
 }
 
-.channel-group {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 4px;
-}
-
-.favorite {
-    font-size: 19px;
-    color: #ffd45c;
-    background: none;
-    border: none;
-    cursor: pointer;
-}
-
-main {
+.player-area {
     padding: 25px;
-    min-width: 0;
-}
-
-.player-wrapper {
-    width: 100%;
-    background: black;
-    border-radius: 13px;
-    overflow: hidden;
-    position: relative;
 }
 
 video {
     width: 100%;
-    display: block;
     max-height: 70vh;
-    aspect-ratio: 16 / 9;
     background: black;
+    border-radius: 10px;
 }
 
-.channel-heading {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    flex-wrap: wrap;
+.now-playing {
     margin-top: 18px;
-}
-
-.channel-heading h2 {
-    margin: 0;
-    font-size: 23px;
+    font-size: 22px;
+    font-weight: bold;
 }
 
 .status {
-    color: var(--muted);
+    color: #aaa;
+    margin-top: 10px;
+}
+
+.count {
+    color: #aaa;
     font-size: 13px;
-    margin-top: 9px;
+    margin-bottom: 12px;
 }
 
-.controls {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-top: 18px;
-}
-
-button {
-    cursor: pointer;
-}
-
-.control-btn {
-    padding: 11px 15px;
-    background: var(--card);
-    color: white;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-}
-
-.control-btn:hover {
-    border-color: var(--accent);
-}
-
-.language-panel {
-    background: var(--panel);
-    padding: 18px;
-    margin-top: 20px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-}
-
-.language-panel h3 {
-    margin: 0 0 12px;
-    font-size: 16px;
-}
-
-.language-panel select {
-    max-width: 350px;
-    margin-bottom: 5px;
-}
-
-.language-note {
-    font-size: 12px;
-    color: var(--muted);
-    line-height: 1.5;
-}
-
-.dashboard {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-top: 20px;
-}
-
-.stat {
-    background: var(--panel);
-    padding: 16px;
+.keyboard-info {
+    margin-top: 25px;
+    background: #191a20;
+    border: 1px solid #30313a;
+    padding: 15px;
     border-radius: 10px;
-    border: 1px solid var(--border);
 }
 
-.stat small {
-    color: var(--muted);
-}
-
-.stat strong {
-    display: block;
-    font-size: 21px;
-    margin-top: 8px;
-}
-
-.keyboard {
-    background: var(--panel);
-    padding: 18px;
-    border-radius: 12px;
-    margin-top: 20px;
-    border: 1px solid var(--border);
-}
-
-.keyboard h3 {
+.keyboard-info h3 {
+    color: #ff4545;
     margin-top: 0;
-    color: var(--accent);
 }
 
-.keyboard-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 9px;
-    color: var(--muted);
+.keyboard-info p {
+    color: #bbb;
     font-size: 13px;
+    line-height: 1.8;
 }
 
-kbd {
-    background: var(--card);
-    padding: 4px 8px;
-    border-radius: 5px;
-    color: white;
-    border: 1px solid var(--border);
+.volume-info {
+    color: #ff6565;
+    margin-top: 12px;
 }
 
-#toast {
-    position: fixed;
-    bottom: 25px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--accent);
-    color: white;
-    padding: 12px 20px;
-    border-radius: 8px;
-    display: none;
-    z-index: 30;
-}
-
-@media(max-width:850px) {
-    .layout {
+@media(max-width:750px) {
+    .container {
         grid-template-columns: 1fr;
     }
 
     .sidebar {
-        height: 390px;
-        position: static;
+        max-height: 350px;
         border-right: none;
-        border-bottom: 1px solid var(--border);
     }
 
-    main {
+    .player-area {
         padding: 15px;
-    }
-}
-
-@media(max-width:500px) {
-    header {
-        padding: 0 14px;
-    }
-
-    .dashboard {
-        grid-template-columns: 1fr;
-    }
-
-    .keyboard-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .channel-heading h2 {
-        font-size: 18px;
     }
 }
 </style>
@@ -361,201 +155,92 @@ kbd {
 <body>
 
 <header>
-    <div class="logo">▶ IPTV SMART</div>
-    <div class="live">● LIVE PLAYER</div>
+    <div class="logo">▶ IPTV LIVE</div>
+    <div id="playlistStatus">Loading playlist...</div>
 </header>
 
-<div class="layout">
+<div class="container">
 
     <aside class="sidebar">
 
         <input
             type="text"
             id="search"
-            placeholder="🔍 Search channels..."
+            placeholder="Search channels..."
         >
 
         <select id="category">
             <option value="all">All Categories</option>
         </select>
 
-        <div class="tabs">
-            <button class="active" data-tab="all">All</button>
-            <button data-tab="favorites">⭐ Favorites</button>
-            <button data-tab="recent">Recent</button>
-        </div>
+        <div class="count" id="count">Loading channels...</div>
 
-        <div class="channel-count" id="channelCount">
-            Loading channels...
-        </div>
-
-        <div class="channel-list" id="channelList"></div>
+        <div id="channelList"></div>
 
     </aside>
 
-    <main>
+    <main class="player-area">
 
-        <div class="player-wrapper">
-            <video
-                id="video"
-                controls
-                playsinline
-                preload="none">
-            </video>
-        </div>
+        <video id="video" controls playsinline></video>
 
-        <div class="channel-heading">
-            <h2 id="channelTitle">Welcome to IPTV Smart</h2>
-            <span class="live">● LIVE</span>
+        <div class="now-playing" id="channelTitle">
+            Select a channel
         </div>
 
         <div class="status" id="playerStatus">
-            Select a channel to begin watching.
+            Choose a channel from the list to start streaming.
         </div>
 
-        <div class="controls">
-
-            <button class="control-btn" id="previousBtn">
-                ⏮ Previous
-            </button>
-
-            <button class="control-btn" id="nextBtn">
-                Next ⏭
-            </button>
-
-            <button class="control-btn" id="muteBtn">
-                🔊 Mute
-            </button>
-
-            <button class="control-btn" id="fullscreenBtn">
-                ⛶ Fullscreen
-            </button>
-
-            <button class="control-btn" id="favoriteBtn">
-                ☆ Add Favorite
-            </button>
-
+        <div class="volume-info" id="volumeInfo">
+            Volume: 100%
         </div>
 
-        <!-- LIVE AUDIO LANGUAGE -->
-        <section class="language-panel">
-
-            <h3>🌐 Audio Language</h3>
-
-            <select id="audioLanguage">
-                <option value="-1">Detecting audio tracks...</option>
-            </select>
-
-            <div class="language-note" id="audioNote">
-                Available audio languages will appear when
-                the selected channel provides multiple audio tracks.
-            </div>
-
-        </section>
-
-        <!-- PLAYER DASHBOARD -->
-        <div class="dashboard">
-
-            <div class="stat">
-                <small>Total Channels</small>
-                <strong id="totalChannels">0</strong>
-            </div>
-
-            <div class="stat">
-                <small>Favorites</small>
-                <strong id="totalFavorites">0</strong>
-            </div>
-
-            <div class="stat">
-                <small>Volume</small>
-                <strong id="volumeValue">100%</strong>
-            </div>
-
-        </div>
-
-        <!-- KEYBOARD SHORTCUTS -->
-        <section class="keyboard">
+        <div class="keyboard-info">
 
             <h3>⌨ Keyboard Shortcuts</h3>
 
-            <div class="keyboard-grid">
-                <div><kbd>↑</kbd> Volume Up</div>
-                <div><kbd>↓</kbd> Volume Down</div>
-                <div><kbd>←</kbd> Previous Channel</div>
-                <div><kbd>→</kbd> Next Channel</div>
-                <div><kbd>M</kbd> Mute / Unmute</div>
-                <div><kbd>Space</kbd> Play / Pause</div>
-                <div><kbd>F</kbd> Fullscreen</div>
-                <div><kbd>N</kbd> Next Channel</div>
-            </div>
+            <p>
+                ↑ Up Arrow : Volume Increase<br>
+                ↓ Down Arrow : Volume Decrease<br>
+                ← Left Arrow : Previous Channel<br>
+                → Right Arrow : Next Channel<br>
+                M : Mute / Unmute<br>
+                Space : Play / Pause<br>
+                F : Full Screen
+            </p>
 
-        </section>
+        </div>
 
     </main>
 
 </div>
 
-<div id="toast"></div>
-
 <script>
-
-// =====================================
-// CONFIGURATION
-// =====================================
 
 const PLAYLIST_URL =
 "https://iptv-org.github.io/iptv/index.m3u";
 
 const video = document.getElementById("video");
 const channelList = document.getElementById("channelList");
+const search = document.getElementById("search");
+const category = document.getElementById("category");
 
 let channels = [];
 let hls = null;
 let activeChannel = null;
-let currentTab = "all";
 
-let favorites = JSON.parse(
-    localStorage.getItem("iptvFavorites") || "[]"
-);
-
-let recent = JSON.parse(
-    localStorage.getItem("iptvRecent") || "[]"
-);
-
-// =====================================
-// TOAST MESSAGE
-// =====================================
-
-function toast(message) {
-
-    const box = document.getElementById("toast");
-
-    box.textContent = message;
-    box.style.display = "block";
-
-    clearTimeout(window.toastTimer);
-
-    window.toastTimer = setTimeout(() => {
-        box.style.display = "none";
-    }, 2500);
-
-}
-
-// =====================================
-// LOAD PLAYLIST
-// =====================================
-
+// Load playlist
 async function loadPlaylist() {
 
     try {
 
-        document.getElementById("playerStatus").textContent =
-        "Downloading IPTV playlist...";
+        document.getElementById("playlistStatus").textContent =
+        "Loading...";
 
         const response = await fetch(PLAYLIST_URL);
 
         if (!response.ok) {
-            throw new Error("Playlist download failed");
+            throw new Error("Playlist could not be loaded");
         }
 
         const text = await response.text();
@@ -568,25 +253,23 @@ async function loadPlaylist() {
 
         loadCategories();
         renderChannels();
-        updateDashboard();
 
-        document.getElementById("playerStatus").textContent =
-        "Playlist successfully loaded.";
+        document.getElementById("playlistStatus").textContent =
+        channels.length + " Channels Loaded";
 
-    } catch(error) {
+    } catch (error) {
 
-        document.getElementById("playerStatus").textContent =
+        document.getElementById("playlistStatus").textContent =
+        "Loading failed";
+
+        channelList.textContent =
         error.message +
-        ". Check your internet connection or playlist CORS access.";
+        ". Check internet connection or CORS access.";
 
     }
-
 }
 
-// =====================================
-// PARSE M3U
-// =====================================
-
+// Parse M3U
 function parseM3U(data) {
 
     const lines = data.split(/\r?\n/);
@@ -600,23 +283,18 @@ function parseM3U(data) {
 
         if (value.startsWith("#EXTINF:")) {
 
-            const name =
-                value.split(",").slice(1).join(",").trim();
+            const name = value.split(",").slice(1).join(",").trim();
 
             const group =
-                value.match(/group-title="([^"]*)"/i);
+            value.match(/group-title="([^"]*)"/i);
 
             const logo =
-                value.match(/tvg-logo="([^"]*)"/i);
-
-            const id =
-                value.match(/tvg-id="([^"]*)"/i);
+            value.match(/tvg-logo="([^"]*)"/i);
 
             current = {
                 name: name || "Unknown Channel",
                 category: group ? group[1] : "Other",
                 logo: logo ? logo[1] : "",
-                id: id ? id[1] : "",
                 url: ""
             };
 
@@ -627,94 +305,57 @@ function parseM3U(data) {
         ) {
 
             current.url = value;
-
             result.push(current);
-
             current = null;
 
         }
-
     }
 
     return result;
-
 }
 
-// =====================================
-// LOAD CATEGORIES
-// =====================================
-
+// Categories
 function loadCategories() {
-
-    const select = document.getElementById("category");
-
-    select.innerHTML =
-    '<option value="all">All Categories</option>';
 
     const categories = [
         ...new Set(channels.map(c => c.category))
     ].sort();
 
-    categories.forEach(cat => {
+    categories.forEach(item => {
 
         const option = document.createElement("option");
 
-        option.value = cat;
-        option.textContent = cat;
+        option.value = item;
+        option.textContent = item;
 
-        select.appendChild(option);
+        category.appendChild(option);
 
     });
-
 }
 
-// =====================================
-// RENDER CHANNELS
-// =====================================
-
+// Render channels
 function renderChannels() {
 
     channelList.innerHTML = "";
 
-    const keyword =
-        document.getElementById("search").value.toLowerCase();
+    const keyword = search.value.toLowerCase();
+    const selectedCategory = category.value;
 
-    const selectedCategory =
-        document.getElementById("category").value;
-
-    let filtered = channels.filter(channel => {
+    const filtered = channels.filter(c => {
 
         const matchesName =
-            channel.name.toLowerCase().includes(keyword);
+        c.name.toLowerCase().includes(keyword);
 
         const matchesCategory =
-            selectedCategory === "all" ||
-            channel.category === selectedCategory;
+        selectedCategory === "all" ||
+        c.category === selectedCategory;
 
         return matchesName && matchesCategory;
 
     });
 
-    if (currentTab === "favorites") {
-
-        filtered = filtered.filter(channel =>
-            favorites.includes(channel.url)
-        );
-
-    }
-
-    if (currentTab === "recent") {
-
-        filtered = filtered.filter(channel =>
-            recent.includes(channel.url)
-        ).sort((a, b) =>
-            recent.indexOf(a.url) - recent.indexOf(b.url)
-        );
-
-    }
-
-    document.getElementById("channelCount").textContent =
-        `Showing ${filtered.length} channels`;
+    document.getElementById("count").textContent =
+    `Showing ${filtered.length} / ${channels.length} channels`;
 
     filtered.forEach(channel => {
 
@@ -726,151 +367,35 @@ function renderChannels() {
             item.classList.add("active");
         }
 
-        const logo = document.createElement("img");
-
-        logo.src = channel.logo || "";
-        logo.alt = "";
-        logo.loading = "lazy";
-
-        logo.onerror = function() {
-            this.style.visibility = "hidden";
-        };
-
-        const info = document.createElement("div");
-
-        info.className = "channel-info";
-
-        const name = document.createElement("div");
-
+        const name = document.createElement("span");
         name.className = "channel-name";
         name.textContent = channel.name;
 
-        const group = document.createElement("div");
-
-        group.className = "channel-group";
-        group.textContent = channel.category;
-
-        info.append(name, group);
-
-        const star = document.createElement("button");
-
-        star.className = "favorite";
-
-        star.textContent =
-            favorites.includes(channel.url) ? "★" : "☆";
-
-        star.title = "Toggle favorite";
-
-        star.onclick = function(event) {
-
-            event.stopPropagation();
-
-            toggleFavorite(channel);
-
-        };
-
-        item.append(logo, info, star);
+        item.appendChild(name);
 
         item.onclick = () => playChannel(channel);
 
         channelList.appendChild(item);
 
     });
-
 }
 
-// =====================================
-// FAVORITES
-// =====================================
-
-function toggleFavorite(channel) {
-
-    if (favorites.includes(channel.url)) {
-
-        favorites = favorites.filter(
-            url => url !== channel.url
-        );
-
-        toast("Removed from favorites");
-
-    } else {
-
-        favorites.push(channel.url);
-
-        toast("⭐ Added to favorites");
-
-    }
-
-    localStorage.setItem(
-        "iptvFavorites",
-        JSON.stringify(favorites)
-    );
-
-    updateDashboard();
-    updateFavoriteButton();
-    renderChannels();
-
-}
-
-function updateFavoriteButton() {
-
-    const button =
-        document.getElementById("favoriteBtn");
-
-    if (!activeChannel) return;
-
-    button.textContent =
-        favorites.includes(activeChannel.url)
-        ? "★ Remove Favorite"
-        : "☆ Add Favorite";
-
-}
-
-// =====================================
-// RECENT CHANNELS
-// =====================================
-
-function addRecent(channel) {
-
-    recent = recent.filter(url => url !== channel.url);
-
-    recent.unshift(channel.url);
-
-    recent = recent.slice(0, 20);
-
-    localStorage.setItem(
-        "iptvRecent",
-        JSON.stringify(recent)
-    );
-
-}
-
-// =====================================
-// PLAY CHANNEL
-// =====================================
-
+// Play channel
 function playChannel(channel) {
 
     activeChannel = channel;
 
     document.getElementById("channelTitle").textContent =
-        channel.name;
+    channel.name;
 
     document.getElementById("playerStatus").textContent =
-        "Connecting to live stream...";
-
-    addRecent(channel);
+    "Connecting to stream...";
 
     renderChannels();
-    updateDashboard();
-    updateFavoriteButton();
-    resetAudioTracks();
 
     if (hls) {
-
         hls.destroy();
         hls = null;
-
     }
 
     video.pause();
@@ -879,27 +404,20 @@ function playChannel(channel) {
 
     if (Hls.isSupported()) {
 
-        hls = new Hls({
-            enableWorker: true
-        });
+        hls = new Hls();
 
-        // Audio track events
-        hls.on(Hls.Events.AUDIO_TRACKS_UPDATED, () => {
-            updateAudioTracks();
-        });
-
-        hls.on(Hls.Events.AUDIO_TRACK_SWITCHED, () => {
-            updateAudioSelection();
-        });
+        hls.loadSource(channel.url);
+        hls.attachMedia(video);
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
 
-            updateAudioTracks();
+            video.play().catch(() => {
+                document.getElementById("playerStatus").textContent =
+                "Press Play to start streaming.";
+            });
 
             document.getElementById("playerStatus").textContent =
-                "Stream connected. Press play if needed.";
-
-            video.play().catch(() => {});
+            "Stream connected";
 
         });
 
@@ -908,211 +426,30 @@ function playChannel(channel) {
             if (data.fatal) {
 
                 document.getElementById("playerStatus").textContent =
-                    "Stream unavailable or playback error.";
-
-                toast("Stream playback failed");
+                "Stream unavailable or playback error.";
 
             }
 
         });
 
-        hls.loadSource(channel.url);
-        hls.attachMedia(video);
-
-    } else if (
-        video.canPlayType("application/vnd.apple.mpegurl")
-    ) {
+    } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
 
         video.src = channel.url;
 
-        video.addEventListener(
-            "loadedmetadata",
-            updateNativeAudioTracks,
-            { once: true }
-        );
-
-        video.play().catch(() => {});
-
-        document.getElementById("playerStatus").textContent =
-            "Native HLS playback";
+        video.play().catch(() => {
+            document.getElementById("playerStatus").textContent =
+            "Press Play to start streaming.";
+        });
 
     } else {
 
         document.getElementById("playerStatus").textContent =
-            "This browser does not support HLS.";
+        "HLS not supported.";
 
     }
-
 }
 
-// =====================================
-// LIVE AUDIO LANGUAGE SWITCHING
-// =====================================
-
-function resetAudioTracks() {
-
-    const select =
-        document.getElementById("audioLanguage");
-
-    select.innerHTML =
-        '<option value="-1">Detecting audio tracks...</option>';
-
-    select.disabled = true;
-
-    document.getElementById("audioNote").textContent =
-        "Waiting for stream audio information...";
-
-}
-
-// Get HLS audio tracks
-function updateAudioTracks() {
-
-    if (!hls) return;
-
-    const tracks = hls.audioTracks || [];
-
-    const select =
-        document.getElementById("audioLanguage");
-
-    select.innerHTML = "";
-
-    if (!tracks.length) {
-
-        select.innerHTML =
-            '<option value="-1">No alternate audio tracks</option>';
-
-        select.disabled = true;
-
-        document.getElementById("audioNote").textContent =
-            "This stream does not expose selectable audio tracks.";
-
-        return;
-
-    }
-
-    select.disabled = false;
-
-    tracks.forEach((track, index) => {
-
-        const option = document.createElement("option");
-
-        const language =
-            track.lang || "Unknown language";
-
-        const name =
-            track.name || "Audio " + (index + 1);
-
-        option.value = index;
-        option.textContent =
-            name + " (" + language + ")";
-
-        select.appendChild(option);
-
-    });
-
-    select.value = String(hls.audioTrack);
-
-    document.getElementById("audioNote").textContent =
-        tracks.length + " audio track(s) available. " +
-        "Select a track to change the live audio.";
-
-    updateAudioSelection();
-
-}
-
-// Change selected HLS audio track
-document.getElementById("audioLanguage")
-.addEventListener("change", function() {
-
-    const index = Number(this.value);
-
-    if (!hls || index < 0) return;
-
-    hls.audioTrack = index;
-
-    toast("Switching audio track...");
-
-});
-
-// Update selected audio track
-function updateAudioSelection() {
-
-    if (!hls) return;
-
-    const select =
-        document.getElementById("audioLanguage");
-
-    if (hls.audioTrack >= 0) {
-
-        select.value = String(hls.audioTrack);
-
-    }
-
-}
-
-// Native browser audio track support
-function updateNativeAudioTracks() {
-
-    const select =
-        document.getElementById("audioLanguage");
-
-    const tracks = video.audioTracks;
-
-    if (!tracks || tracks.length === 0) {
-
-        select.innerHTML =
-            '<option value="-1">No selectable audio tracks</option>';
-
-        select.disabled = true;
-
-        document.getElementById("audioNote").textContent =
-            "This browser or stream does not expose alternate audio tracks.";
-
-        return;
-
-    }
-
-    select.innerHTML = "";
-    select.disabled = false;
-
-    Array.from(tracks).forEach((track, index) => {
-
-        const option = document.createElement("option");
-
-        option.value = index;
-
-        option.textContent =
-            (track.label || track.language || "Audio " + (index + 1));
-
-        select.appendChild(option);
-
-        if (track.enabled) {
-            select.value = String(index);
-        }
-
-    });
-
-    document.getElementById("audioNote").textContent =
-        "Select an available native audio track.";
-
-    select.onchange = function() {
-
-        const index = Number(this.value);
-
-        Array.from(video.audioTracks).forEach(
-            (track, i) => {
-                track.enabled = i === index;
-            }
-        );
-
-    };
-
-}
-
-// =====================================
-// NEXT / PREVIOUS CHANNEL
-// =====================================
-
+// Next channel
 function nextChannel() {
 
     if (!activeChannel || !channels.length) return;
@@ -1122,9 +459,9 @@ function nextChannel() {
     index = (index + 1) % channels.length;
 
     playChannel(channels[index]);
-
 }
 
+// Previous channel
 function previousChannel() {
 
     if (!activeChannel || !channels.length) return;
@@ -1134,75 +471,31 @@ function previousChannel() {
     index = (index - 1 + channels.length) % channels.length;
 
     playChannel(channels[index]);
-
 }
 
-document.getElementById("nextBtn").onclick =
-    nextChannel;
-
-document.getElementById("previousBtn").onclick =
-    previousChannel;
-
-// =====================================
-// VOLUME
-// =====================================
-
+// Update volume display
 function updateVolume() {
 
-    document.getElementById("volumeValue").textContent =
-        video.muted ? "Muted" :
-        Math.round(video.volume * 100) + "%";
+    const volume = Math.round(video.volume * 100);
 
-    document.getElementById("muteBtn").textContent =
-        video.muted ? "🔇 Unmute" : "🔊 Mute";
+    document.getElementById("volumeInfo").textContent =
+    video.muted ? "Volume: Muted" : "Volume: " + volume + "%";
 
 }
 
 video.addEventListener("volumechange", updateVolume);
 
-document.getElementById("muteBtn").onclick = function() {
-
-    video.muted = !video.muted;
-
-    updateVolume();
-
-};
-
-// =====================================
-// FULLSCREEN
-// =====================================
-
-document.getElementById("fullscreenBtn").onclick =
-    toggleFullscreen;
-
-function toggleFullscreen() {
-
-    if (!document.fullscreenElement) {
-
-        video.requestFullscreen?.();
-
-    } else {
-
-        document.exitFullscreen?.();
-
-    }
-
-}
-
-// =====================================
 // KEYBOARD CONTROLS
-// =====================================
-
 document.addEventListener("keydown", function(event) {
 
+    // Don't interfere with search or dropdown
     if (
         event.target.tagName === "INPUT" ||
         event.target.tagName === "SELECT" ||
-        event.target.tagName === "TEXTAREA" ||
-        event.ctrlKey ||
-        event.altKey ||
-        event.metaKey
-    ) return;
+        event.target.tagName === "TEXTAREA"
+    ) {
+        return;
+    }
 
     switch(event.key) {
 
@@ -1211,9 +504,7 @@ document.addEventListener("keydown", function(event) {
             event.preventDefault();
 
             video.muted = false;
-
-            video.volume =
-                Math.min(1, video.volume + 0.1);
+            video.volume = Math.min(1, video.volume + 0.1);
 
             break;
 
@@ -1221,8 +512,7 @@ document.addEventListener("keydown", function(event) {
 
             event.preventDefault();
 
-            video.volume =
-                Math.max(0, video.volume - 0.1);
+            video.volume = Math.max(0, video.volume - 0.1);
 
             break;
 
@@ -1264,14 +554,11 @@ document.addEventListener("keydown", function(event) {
         case "f":
         case "F":
 
-            toggleFullscreen();
-
-            break;
-
-        case "n":
-        case "N":
-
-            nextChannel();
+            if (!document.fullscreenElement) {
+                video.requestFullscreen?.();
+            } else {
+                document.exitFullscreen?.();
+            }
 
             break;
 
@@ -1279,56 +566,17 @@ document.addEventListener("keydown", function(event) {
 
 });
 
-// =====================================
-// FILTERS AND TABS
-// =====================================
+// Search
+search.addEventListener("input", renderChannels);
 
-document.getElementById("search")
-.addEventListener("input", renderChannels);
+// Category filter
+category.addEventListener("change", renderChannels);
 
-document.getElementById("category")
-.addEventListener("change", renderChannels);
-
-document.querySelectorAll(".tabs button")
-.forEach(button => {
-
-    button.addEventListener("click", function() {
-
-        document.querySelectorAll(".tabs button")
-        .forEach(btn => btn.classList.remove("active"));
-
-        this.classList.add("active");
-
-        currentTab = this.dataset.tab;
-
-        renderChannels();
-
-    });
-
-});
-
-// =====================================
-// DASHBOARD
-// =====================================
-
-function updateDashboard() {
-
-    document.getElementById("totalChannels").textContent =
-        channels.length;
-
-    document.getElementById("totalFavorites").textContent =
-        favorites.length;
-
-}
-
-// =====================================
-// INITIALIZE
-// =====================================
-
+// Initial volume
 video.volume = 1;
-
 updateVolume();
 
+// Start
 loadPlaylist();
 
 </script>
